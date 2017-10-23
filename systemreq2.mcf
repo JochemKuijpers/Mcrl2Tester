@@ -1,0 +1,9 @@
+% b = the Meas chuck is of type A
+
+[true* . forall n : Nat . forall t : RType . lot_info(n, t)]
+nu X (b: Bool = true, t : RType = A) . (
+	[swap] X(!b, t) &&
+	[lot_info(n, t)] X(b, t) &&
+	[move_r2(In, Meas)] val(!b && t == A) => false &&
+	[move_r2(In, Meas)] val(b && t == B) => false
+)

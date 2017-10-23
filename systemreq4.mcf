@@ -1,0 +1,18 @@
+% (a) Any wafer passing through In must be premeasured before moving to Meas
+[true* . move_r1(Tray, In) . (!premeasure)* . move_r2(In, Meas)]false &&
+
+% (b) Any wafer passing through Meas from In must be measured before swapping
+[true* . move_r2(In, Meas) . (!measure)* . swap]false &&
+[true* . move_r2(In, Meas) . (!swap)* . move_r3(Meas, Out)]false &&
+
+% (c) Any wafer passing from In through Meas and to Proj must be projected before swapping again
+% [true* . swap . (!project)* . swap . (!swap)* . move_r3(Meas, Out)]false
+[true* . projection_done . (!swap)* . move_r3(Meas, Out)] false &&
+
+% (d) Eventually we will move every processed wafer back into the tray
+[true* . forall t: RType . forall n: Nat . lot_info(n,t)]
+mu X(n: Nat = n) . (
+	[move_r1(Out, Tray)] X(n-1) &&
+	[forall t: RType . forall n: Nat . lot_info(n,t)] val(n != 0) => false &&
+	[true] X(n)
+)
