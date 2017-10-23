@@ -1,0 +1,3 @@
+[true* . project . !projection_done* . swap]false &&
+[true* . premeasure . !premeasure_done* . move_r2(In, Meas)]false &&
+[true* . measure . !measure_done* .  (swap + move_r2(Meas, Empty1) + move_r3(Meas, Empty2) + move_r3(Meas, Out))]false

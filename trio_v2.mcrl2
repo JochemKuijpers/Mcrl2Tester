@@ -1,0 +1,173 @@
+sort 
+	RType = struct A | B | AB;
+
+sort P=struct Tray | In | Out | Meas | Proj | Empty1 | Empty2;
+
+act 
+ 	%signal communication
+
+	%io <-> tray
+	init_io_read,init_io_send,signal_init_io: Nat;
+	io_done_send,io_done_read,signal_io_done;
+	
+	%recipe <-> tray
+	init_recipe_read,init_recipe_send,signal_init_recipe: Nat # RType;
+	recipe_done_send,recipe_done_read,signal_recipe_done;
+
+	%io <-> recipe
+	get_wafer_send,get_wafer_read,signal_get_wafer;
+	return_wafer_send,return_wafer_read,signal_return_wafer;
+	out_empty_send,out_empty_read,signal_out_empty;
+	in_full_send,in_full_read,signal_in_ready;
+	out_full_read,out_full_send;
+	signal_out_full;
+	get_wafer_done_read, get_wafer_done_send;
+	signal_get_wafer_done;
+	
+	%recipe controller actions
+	move_r2: P # P;
+	move_r2_done;
+	move_r3: P # P;
+	move_r3_done;
+	
+	swap,swap_done;
+	measure,measure_done;
+	project,projection_done;
+	
+	%Tray_controller actions
+	start,calibration,calibration_done,tray_done;
+	lot_info: Nat # RType;
+
+	%IO_controller actions
+	move_r1: P # P;
+	move_r1_done,premeasure,premeasure_done;
+
+	%Recipe_controller actions
+	test; %for example
+	
+proc Tray_process (n:Nat, t:RType) = 
+			(init_io_send(n).init_recipe_send(n,t)+init_recipe_send(n,t).init_io_send(n)).
+			(io_done_read.recipe_done_read + recipe_done_read.io_done_read).
+			calibration.calibration_done;
+
+	
+proc Tray_controller (n: Nat, t:RType,b:Bool) =
+			(b==false) -> start.Tray_controller(n,t,true)+
+			(b==true) -> sum n:Nat,t:RType.(n < 5)->lot_info(n,t).
+				((n==0)-> tray_done.Tray_controller(0,t,false) <> Tray_process(n,t).Tray_controller(0,t,true)				
+			);
+			
+proc GetWafer = 
+			move_r1(Tray,In).move_r1_done.premeasure.premeasure_done.in_full_send;
+
+proc ReturnWafer = 
+			move_r1(Out,Tray).move_r1_done.out_empty_send;
+			
+													
+proc IO_process(n:Nat,i:Nat) = 
+			get_wafer_read.(n>0)->GetWafer.IO_process(max(0,n-1),i)
+			+
+			return_wafer_read.(i>1)->ReturnWafer.IO_process(n,max(0,i-1))<>ReturnWafer.io_done_send
+;
+
+proc IO_controller (n: Nat) = 
+			(n==0) -> sum n:Nat.init_io_read(n).IO_controller(n)+
+			(n>0)->IO_process(n,n).IO_controller(0);
+
+
+proc Recipe_controller(n:Nat, c:RType)= 
+	%initialize
+	(n==0)->sum n:Nat, c:RType.init_recipe_read(n,c).
+	(
+		(c==A)-> InitA.ProcessRecipeAorB(n,c) +
+		(c==B)-> InitB.ProcessRecipeAorB(n,c) +
+		(c==AB)-> 
+			(n==1)-> InitA.ProcessAorB.DeInitA.recipe_done_send.Recipe_controller(0,c) 
+				<>
+				( 
+					((n mod 2)==0)-> InitAB.ProcessRecipeAandB(max(0,n-1),true) 
+							      <> InitAB.ProcessRecipeAandB(max(0,n-1),false)
+				)
+	)
+	<> recipe_done_send.Recipe_controller(0,AB)
+;
+
+%GetWaferFromInAndMeasure
+proc GetWaferFromInAndMeasure = get_wafer_send.in_full_read.move_r2(In, Meas).move_r2_done.measure.measure_done;
+
+%MoveToOut
+proc MoveToOut = move_r3(Meas,Out).move_r3_done.return_wafer_send.out_empty_read;
+
+%ProjectAndMoveToOut
+proc ProjectAndMoveToOut = project.projection_done.swap.swap_done.MoveToOut;
+
+%ProcessAorB
+proc ProcessAorB = GetWaferFromInAndMeasure.swap.swap_done.ProjectAndMoveToOut;
+
+%ProcessAandB
+proc ProcessAandB = GetWaferFromInAndMeasure.ProjectAndMoveToOut;
+
+%InitAB
+% chuck A is at the Meas position. move dummy away
+% get first wafer
+% swap
+% project
+% move second dummy away
+proc InitAB = InitA.GetWaferFromInAndMeasure.swap.swap_done.project.projection_done.move_r3(Meas, Empty2).move_r3_done;
+
+%DeInitAB
+proc DeInitAB = ProcessAandB.move_r2(Empty1, Meas).move_r2_done.swap.swap_done.MoveToOut.move_r3(Empty2, Meas).move_r3_done;
+
+%InitA
+% chuck A is at the Meas position. move dummy away
+proc InitA = move_r2(Meas, Empty1).move_r2_done;
+
+%DeInitA
+% chuck A is at the Meas position. put dummy back
+proc DeInitA = move_r2(Empty1, Meas).move_r2_done;
+
+%InitB
+% chuck A is at the Meas position. swap first then move away the dummy
+proc InitB = swap.swap_done.InitA;
+
+%DeInitB
+% chuck B is at the Meas position. put dummy back and swap.
+proc DeInitB = move_r2(Empty1, Meas).move_r2_done.swap.swap_done;
+
+
+proc ProcessRecipeAorB(n:Nat, c:RType)= 
+	(c==A)-> ((n>1)-> ProcessAorB.ProcessRecipeAorB(max(0,n-1),c) <> ProcessAorB.DeInitA.recipe_done_send.Recipe_controller(0,c)) +
+	(c==B)-> ((n>1)-> ProcessAorB.ProcessRecipeAorB(max(0,n-1),c) <> ProcessAorB.DeInitB.recipe_done_send.Recipe_controller(0,c))
+	% + recipe_done_send.Recipe_controller(0,c)
+;
+
+proc ProcessRecipeAandB(n:Nat, b:Bool)= 
+	%processRecipe
+	(b==true)->
+		((n>1)-> ProcessAandB.ProcessRecipeAandB(max(0,n-1),b) <> DeInitAB.recipe_done_send.Recipe_controller(0,AB))
+		<> ((n>1)-> ProcessAandB.ProcessRecipeAandB(max(0,n-1),b) <> DeInitAB.swap.swap_done.recipe_done_send.Recipe_controller(0,AB))
+	
+;
+			
+			
+init 
+	allow({signal_init_io,signal_init_recipe,signal_recipe_done,signal_get_wafer,signal_return_wafer,signal_out_full,signal_get_wafer_done,
+				signal_out_empty,signal_io_done, signal_in_ready,test,
+				start,calibration,calibration_done,move_r1,move_r1_done,tray_done,premeasure,premeasure_done,
+				move_r2,move_r2_done,project,projection_done,move_r3,move_r3_done,swap,swap_done,measure,measure_done,lot_info},
+		comm(
+					{	
+						init_recipe_read|init_recipe_send 		-> signal_init_recipe,
+						recipe_done_send|recipe_done_read 		-> signal_recipe_done,
+						get_wafer_send|get_wafer_read 				-> signal_get_wafer,
+						return_wafer_send|return_wafer_read 	-> signal_return_wafer,
+						out_empty_send|out_empty_read 				-> signal_out_empty,
+						in_full_send|in_full_read					-> signal_in_ready,
+						io_done_send|io_done_read 						-> signal_io_done,
+						init_io_send|init_io_read 						-> signal_init_io,
+						out_full_read|out_full_send	-> signal_out_full,
+						get_wafer_done_read|get_wafer_done_send	-> signal_get_wafer_done
+					},
+
+					 	Tray_controller(1,A,false)||IO_controller(0)||Recipe_controller(0,A)
+				));
