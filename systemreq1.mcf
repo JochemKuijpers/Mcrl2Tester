@@ -1,4 +1,3 @@
-[true* 
-	. (move_r2(Meas, Empty1) || move_r3(Meas, Empty2) || move_r3(Meas, Out)) 
-	. !(move_r2(In, Meas) || move_r2(Empty1, Meas) || move_r3(Empty2, Meas))* 
-	. swap]false
+[true* . (move_r2(Meas, Empty1) || move_r3(Meas, Empty2) || move_r3(Meas, Out)) 
+       . !(move_r2(In, Meas) || move_r2(Empty1, Meas) || move_r3(Empty2, Meas))* 
+       . swap]false
