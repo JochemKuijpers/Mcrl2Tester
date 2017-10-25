@@ -1,0 +1,1 @@
+[true*] forall n: Nat, c: ChuckType . [ lot_info(n,c) . !( calibrate ) ] false
