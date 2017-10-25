@@ -1,10 +1,12 @@
-% b = the Meas chuck is of type A
+% measIsA = the Meas chuck is of type A
 % waferType = The type of wafer (RType = A, B or AB)
 
-[true*] forall n : Nat . forall t : RType . [ lot_info(n, t)]
-nu X (b: Bool = true, waferType : RType = t) . (
-    [swap] X(!b, waferType) &&
-    forall newWaferType : RType . [lot_info(n, newWaferType)] X(b, newWaferType) &&
-    [move_r2(In, Meas)] (val(!b && waferType == A) => false) &&
-    [move_r2(In, Meas)] (val(b && waferType == B) => false)
+[true*] forall n : Nat, t : RType . [ lot_info(n, t)]
+nu X (measIsA: Bool = true, waferType : RType = t) . (
+    forall newWaferType : RType, newN : Nat .
+    [swap] X(!measIsA, waferType) &&
+    [lot_info(newN, newWaferType)] X(measIsA, newWaferType) &&
+    [move_r2(In, Meas)] (val(!measIsA && waferType == A) => false) &&
+    [move_r2(In, Meas)] (val(measIsA && waferType == B) => false) &&
+    [!(swap || move_r2(In, Meas) || exists m:Nat, q:RType . lot_info(m,q))] X(measIsA, waferType)
 )
