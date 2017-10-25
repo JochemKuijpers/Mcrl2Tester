@@ -10,9 +10,12 @@
 [true* . projection_done . (!swap)* . move_r3(Meas, Out)] false &&
 
 % (d) Eventually we will move every processed wafer back into the tray
-[true* . forall t: RType . forall n: Nat . lot_info(n,t)]
-mu X(n: Nat = n) . (
-	[move_r1(Out, Tray)] X(n-1) &&
-	[forall t: RType . forall n: Nat . lot_info(n,t)] val(n != 0) => false &&
-	[true] X(n)
+[true*] forall t: ChuckType . forall n: Nat . [lot_info(n,t)]
+nu X(nIn: Nat = n, nOut: Nat = n) . (
+	forall newWafers: Nat, newLot: ChuckType .
+	[move_r1(Tray, In)] X(nIn = nIn -1, nOut) &&
+	[move_r1(Out, Tray)] X(nIn, nOut = nOut-1)&&
+	[lot_info(newWafers, newLot)] val(nIn != 0) => false &&
+	[lot_info(newWafers, newLot)] val(nOut != 0) => false &&
+	[!(move_r1(Tray, In) || move_r1(Out, Tray) || exists m:Nat, q:ChuckType . lot_info(m,q))] X(nIn, nOut)
 )
