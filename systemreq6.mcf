@@ -1,0 +1,3 @@
+% Meas can only happen after a move_r2 from In to Meas happens and not a swap
+[true*] . [ move_r2( E1, Meas) . !(swap || move_r2( Meas, E1))* . Meas ] false &&
+[true*] . [ move_r3( E2, Meas) . !(swap || move_r3( Meas, E2))* . Meas ] false
