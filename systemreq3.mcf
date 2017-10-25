@@ -1,3 +1,8 @@
-[true* . project . !projection_done* . swap]false &&
+% Cannot swap before projection is done
+[true* . project . !project_done* . swap]false &&
+% Cannot move from In before premeasure is done
 [true* . premeasure . !premeasure_done* . move_r2(In, Meas)]false &&
-[true* . measure . !measure_done* .  (swap + move_r2(Meas, Empty1) + move_r3(Meas, Empty2) + move_r3(Meas, Out))]false
+% Cannot move from Meas or swap before measure is done
+[true* . measure . !measure_done* . (
+    swap + move_r2(Meas, Empty1) + move_r3(Meas, Empty2) + move_r3(Meas, Out)
+)]false

@@ -7,7 +7,6 @@ define("BLU", "\033[1;34m");
 define("GRN", "\033[1;32m");
 
 function syscall($cmd) {
-	list($cmdName, $params) = explode(" ", $cmd, 2);
 	echo DEF . "    < " . BLU . $cmd . "\n";
 	$output = [];
 	exec($cmd . " 2>&1", $output, $retval);
