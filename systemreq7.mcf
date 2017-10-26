@@ -2,4 +2,4 @@
 
 mu X . (
     forall n: Nat, t: ChuckType .
-    [ lot_info(n, t) val(n == 0) => % move_r2( E1, Meas) and move_r3(E2, Meas) should happen if they didn't already happen before
+    [ lot_info(n, t) val(n == 0) => % move_r2( Empty1, Meas) and move_r3(Empty2, Meas) should happen if they didn't already happen before
