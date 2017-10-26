@@ -7,4 +7,3 @@ mu X . (
     [!tray_done] X &&
     [tray_done] true
 )
-

@@ -12,7 +12,6 @@
 % (d) Eventually we will move every processed wafer back into the tray
 % nIn = number of wafers in this lot to take from the tray
 % nOut = number of wafers in this lot to put back in the tray
-
 [true*] forall t: ChuckType . forall n: Nat . [lot_info(n,t)]
 nu X(nIn: Nat = n, nOut: Nat = n) . (
     % when taking a wafer out of the tray, decrease nIn by 1
