@@ -1,17 +1,19 @@
 % After start, Meas and Proj contain dummy wafers.
+% dummyMeas = whether or not a dummy wafer is at Meas
+% dummyProj = whether or not a dummy wafer is at Proj
 [true* . start]
 nu X(dummyMeas: Bool = true, dummyProj: Bool = true) . (
     % When swap happens, the boolean values swap places
     [swap] X(dummyProj, dummyMeas) &&
     % Moving in a dummy wafer sets dummyMeas to true
     [move_r2(Empty1, Meas)] X(true, dummyProj) &&
-    [move_r3(Empty2, Meas)] X(true, dummyProj) &&
+    [move_r3(Empty2, Meas)] X(false, dummyProj) &&
     % Moving out a dummy wafer sets dummyMeas to false
     [move_r2(Meas, Empty1)] X(false, dummyProj) &&
     [move_r3(Meas, Empty2)] X(false, dummyProj) &&
     % When project or measure happens, it cannot be on a dummy wafer
-    [project] val(!dummyProj) &&
-    [measure] val(!dummyMeas) &&
+    [project] (val(dummyProj) => false) &&
+    [measure] (val(dummyMeas) => false) &&
     % the variables should be the same for all other actions
     [!(
         swap || project || measure ||
