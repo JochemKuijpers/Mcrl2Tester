@@ -1,0 +1,7 @@
+% Meas must not happen for dummy wafers
+[true*] . [ move_r2( E1, Meas) . !(swap || move_r2( Meas, E1))* . Meas ] false &&
+[true*] . [ move_r3( E2, Meas) . !(swap || move_r3( Meas, E2))* . Meas ] false &&
+
+% Proj must not happen on dummy wafers
+[true*] . [ move_r2( E1, Meas) . !(swap || move_r2( Meas, E1))* . swap . project ] false &&
+[true*] . [ move_r3( E2, Meas) . !(swap || move_r3( Meas, E2))* . swap . project ] false
