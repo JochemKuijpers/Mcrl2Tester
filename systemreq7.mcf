@@ -1,2 +1,4 @@
+% It cannot happen that a dummy wafer is moved out of Meas and the tray is done
+% before it is moved back to Meas.
 [true* . move_r2(Meas, Empty1) . (!move_r2(Empty1, Meas))* . tray_done] false &&
 [true* . move_r3(Meas, Empty2) . (!move_r3(Empty2, Meas))* . tray_done] false
