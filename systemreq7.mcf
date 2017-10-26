@@ -1,4 +1,2 @@
-[true*] forall n: Nat, t: RType . [lot_info(n, t)]
-mu X . (
-    forall n: Nat, t: ChuckType .
-    [ lot_info(n, t) val(n == 0) => % move_r2( Empty1, Meas) and move_r3(Empty2, Meas) should happen if they didn't already happen before
+[true* . move_r2(Meas, Empty1) . (!move_r2(Empty1, Meas))* . tray_done] false &&
+[true* . move_r3(Meas, Empty2) . (!move_r3(Empty2, Meas))* . tray_done] false
