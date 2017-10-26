@@ -2,6 +2,6 @@
 [true*] . [ move_r2( Empty1, Meas) . !(swap || move_r2( Meas, Empty1))* . Meas ] false &&
 [true*] . [ move_r3( Empty2, Meas) . !(swap || move_r3( Meas, Empty2))* . Meas ] false &&
 
-% Proj must not happen on dummy wafers
+% Projection must not happen on dummy wafers
 [true*] . [ move_r2( Empty1, Meas) . !(swap || move_r2( Meas, Empty1))* . swap . project ] false &&
 [true*] . [ move_r3( Empty2, Meas) . !(swap || move_r3( Meas, Empty2))* . swap . project ] false
