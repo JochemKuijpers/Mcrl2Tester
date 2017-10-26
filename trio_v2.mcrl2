@@ -265,22 +265,21 @@ proc TrayProcess (n:Nat, c:ChuckType) =
 		io_done_read
 	);
 
-proc Tray_Controller (n: Nat, c:ChuckType, b:Bool) =
+proc Tray_Controller (b:Bool) =
     (b==false) -> (
         start .
-        Tray_Controller(n, c, true)
-    ) +
-    (b==true) -> (
+        Tray_Controller(true)
+    ) <> (
         sum n:Nat, c:ChuckType .
         (n<3) -> (
             lot_info(n, c)
         ) .
         (n==0) -> (
             tray_done .
-            Tray_Controller(0, c, false)
+            Tray_Controller(false)
         ) <> (
             TrayProcess(n, c) .
-            Tray_Controller(0, c, true)
+            Tray_Controller(true)
         )
     );
 
@@ -304,7 +303,7 @@ init
                 io_done_send      | io_done_read      -> signal_io_done,
                 init_io_send      | init_io_read      -> signal_init_io
             },
-            Tray_Controller(1,AB,false) ||
+            Tray_Controller(false) ||
             IO_Controller(0) ||
             Recipe_controller(0,A)
         )

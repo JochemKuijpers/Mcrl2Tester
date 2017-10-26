@@ -36,12 +36,28 @@ function testReq($mcfName) {
 	echo "\n";
 }
 
+function showGraph() {
+    echo DEF . "Generating reachable states..\n";
+    syscall("lps2lts trio_v2.lps trio_v2.aut");
+    echo DEF . "Displaying graph..\n";
+    syscall("ltsgraph trio_v2.aut");
+    echo GRN . "Graph viewer closed\n";
+}
+
 $reqs = [];
 
 if (count($argv) <= 1) {
 	for($n = 1; $n <= 13; $n += 1) {
 		$reqs[] = "systemreq" . $n;
 	}
+}
+
+compile();
+
+if (count($argv) == 2 && $argv[1] == 'graph') {
+    showGraph();
+    echo DEF . "DONE.\n";
+    die;
 }
 
 foreach($argv as $index => $arg) {
@@ -54,8 +70,6 @@ foreach($argv as $index => $arg) {
 		$reqs[] = "systemreq" . $arg;
 	}
 }
-
-compile();
 
 foreach($reqs as $req) {
 	testReq($req);
