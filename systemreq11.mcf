@@ -1,0 +1,14 @@
+% Chuck A is on the Meas place and chuck B is on the Proj place
+% Meas of type Bool indicates that chuck A is on the Meas place
+[true*] .
+nu X(Meas: Bool = true) . (
+    [ swap ] X(!Meas) &&
+    [ tray_done ] val ( Meas == false )  => false
+    [!(swap)] X(Meas)
+)
+
+% Dummy wafers are placed on A and B chucks
+%    There will always be a dummy on proj for a swap to happen
+%    as for Meas to have a dummy wafer it's already covered in 9
+
+% All other chucks are empty: also already covered in 7 where move from Out to Tray should happen N times

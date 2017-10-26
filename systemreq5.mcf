@@ -1,6 +1,5 @@
 [true*] forall n: Nat, t: RType . [lot_info(n, t)]
-
 mu X . (
-    forall n: Nat, t: ChuckType .
-    [ lot_info(n, t) val(n == 0) => Tray_done
-
+    forall t: ChuckType .
+    [ lot_info(0, t) ] . <Tray_done> true
+)
