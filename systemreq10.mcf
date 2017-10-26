@@ -1,0 +1,7 @@
+% Whenever a wafer is moved from Tray to In chuck another one cannot follow if no move from In to Meas happened
+[true*] . [move_r1(Tray, In) . !(move_r2(In, Meas))* . move_r1(Tray, In)] false &&
+% If a move from In to Meas chuck happened then another one cannot happen if no swap_done happened, 
+[true*] . [move_r2(In, Meas) . !(swap_done)* . move_r2(In, Meas)] false &&
+% However this doesn't take into account processing on both chucks and after two wafers are processed then the third may go on top of the second if it wasn't removed
+% Whenever a wafer is moved from Meas to Out chuck another one cannot follow if no move from Out to Tray happened
+[true*] . [move_r2(Meas, Out) . !(move_r1(Out, Tray))* . move_r2(Meas, Out)] false
