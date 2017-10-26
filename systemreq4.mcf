@@ -7,15 +7,24 @@
 
 % (c) Any wafer passing from In through Meas and to Proj must be projected before swapping again
 % [true* . swap . (!project)* . swap . (!swap)* . move_r3(Meas, Out)]false
-[true* . projection_done . (!swap)* . move_r3(Meas, Out)] false &&
+[true* . project_done . (!swap)* . move_r3(Meas, Out)] false &&
 
 % (d) Eventually we will move every processed wafer back into the tray
+% nIn = number of wafers in this lot to take from the tray
+% nOut = number of wafers in this lot to put back in the tray
+
 [true*] forall t: ChuckType . forall n: Nat . [lot_info(n,t)]
 nu X(nIn: Nat = n, nOut: Nat = n) . (
+    % when taking a wafer out of the tray, decrease nIn by 1
+    [move_r1(Tray, In)] X(max(0, nIn-1), nOut) &&
+    % when putting a wafer into the tray, decrease nOut by 1
+    [move_r1(Out, Tray)] X(nIn, max(0, nOut-1)) &&
+    % whenever lot_info happens, nIn = nOut = 0 should hold and after
+    % that, X should hold with the number of wafers in the new lot
     forall newWafers: Nat, newLot: ChuckType .
-    [move_r1(Tray, In)] X(nIn = nIn -1, nOut) &&
-    [move_r1(Out, Tray)] X(nIn, nOut = nOut-1)&&
-    [lot_info(newWafers, newLot)] val(nIn != 0) => false &&
-    [lot_info(newWafers, newLot)] val(nOut != 0) => false &&
-    [!(move_r1(Tray, In) || move_r1(Out, Tray) || exists m:Nat, q:ChuckType . lot_info(m,q))] X(nIn, nOut)
+    [lot_info(newWafers, newLot)] (val(nIn == 0 && nOut == 0)
+        && X(newWafers, newWafers)) &&
+    % in any other action, X(nIn, nOut) should hold
+    [!(move_r1(Tray, In) || move_r1(Out, Tray)
+        || exists m:Nat, q:ChuckType . lot_info(m,q))] X(nIn, nOut)
 )
