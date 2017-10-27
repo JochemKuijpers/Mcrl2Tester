@@ -1,6 +1,6 @@
-% If you move a wafer to Out, then an empty chuck remains.
-% Then it MUST be possible to either place the dummy wafer on Empty1
-% or place the dummy wafer on Empty2 to Meas.
+% If a move from Meas to Out happend, then an empty chuck remains.
+% Then it MUST be possible to either place the dummy wafer from Empty1
+% or place the dummy wafer from Empty2 to Meas.
 
 % [true* .
 %     (move_r3(Meas, Out)) .
@@ -15,7 +15,9 @@
     [ lot_info (n, t) ] X(n) &&
     [move_r2(Meas, Out)] X(max(0,n-1)) &&
     [!(move_r2(Meas, Out) || exists m:Nat, q:ChuckType . lot_info(m, q))] X(n) &&
-    (val( n == 0 ) => mu Y . [ !(move_r2(Empty1, Meas) || move_r3(Empty2, Meas))] X(0)) &&
+    %next line is: a Dummy will be moved from Empty to Meas will happen after the last wafer is moved to Out
+    (val( n == 0 ) => mu Y . [ !(move_r2(Empty1, Meas) || move_r3(Empty2, Meas))] X(0)) ||
+    %If that move didn't happen and a tray_done happened then it's a false
     [ tray_done ] false &&
     <true> true
 )
