@@ -2,7 +2,7 @@
 
 % (a) Chuck A is on the Meas place and chuck B is on the Proj place
 % meas = whether or not chuck A is on the Meas place
-[true*]
+[true* .start ]
 nu X(meas: Bool = true) . (
     [swap] X(!meas) &&
     [tray_done] val(meas) &&
