@@ -215,7 +215,7 @@ proc ProcessRecipeAandB(n:Nat, b:Bool) =
 	    ) <> (
 	        DeInitAandB .
 	        recipe_done_send .
-	        Recipe_controller(0, AB)
+	        Recipe_controller
 	    )
 	) <> (
 	    (n>1) -> (
@@ -226,7 +226,7 @@ proc ProcessRecipeAandB(n:Nat, b:Bool) =
 	        swap .
 	        swap_done .
 	        recipe_done_send .
-	        Recipe_controller(0, AB)
+	        Recipe_controller
 	    )
     );
 
