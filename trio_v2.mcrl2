@@ -233,34 +233,44 @@ proc ProcessRecipeAandB(n:Nat, b:Bool) =
 % Recipe_controller
 % The main recipe controller
 proc Recipe_controller =
-    sum n:Nat, c:ChuckType . %(n==2)->(c==AB)->
-    init_recipe_read(n, c) . (
-        (c==A) -> ( % process A
-	    InitA .
-	    ProcessRecipeAorB(n,c)
-	) +
-	(c==B) -> ( % process B
-	    InitB .
-	    ProcessRecipeAorB(n,c)
-	) +
-	(c==AB) -> ( % process AB
-	    (n==1) -> ( % only one wafer,use process A
-		InitA .
-		ProcessAorB .
-		DeInitA .
-		recipe_done_send .
-		Recipe_controller
-            ) <> ( % two or more wafers use process AB
-		((n mod 2)==0) -> ( % even number of wafers
-		    InitAandB .
-		    ProcessRecipeAandB(max(0, n-1), true)
-	    ) <> (              % uneven number of wafers
-		InitAandB .
-		ProcessRecipeAandB(max(0, n-1), false)
-	    )
-	)
-    )
-); 
+    sum n:Nat, c:ChuckType .(n<4)->
+    (
+    	init_recipe_read(n, c) . 
+	(
+            (c==A) -> 
+	    ( % process A
+	        InitA .
+	        ProcessRecipeAorB(n,c)
+	    ) +
+	    (c==B) -> 
+	    ( % process B
+	        InitB .
+	        ProcessRecipeAorB(n,c)
+	    ) +
+	    (c==AB) -> 
+	    ( % process AB
+	        (n==1) -> 
+	        ( % only one wafer,use process A
+		    InitA .
+		    ProcessAorB .
+		    DeInitA .
+		    recipe_done_send .
+		    Recipe_controller
+                ) <> 
+		( % two or more wafers use process AB
+		    ((n mod 2)==0) -> 
+		    ( % even number of wafers
+		        InitAandB .
+		        ProcessRecipeAandB(max(0, n-1), true)
+	            ) <> 
+		    (              % uneven number of wafers
+		        InitAandB .
+		        ProcessRecipeAandB(max(0, n-1), false)
+	            )
+	        )
+            )
+        )  
+    ); 
 	
 % GetWafer
 % The process is triggered by the action "get_wafer_read".
