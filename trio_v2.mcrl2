@@ -74,15 +74,15 @@ proc ProcessAandB =
 % chuck A is at the Meas position. move dummy away
 % get first wafer
 % swap
-% project
+% do not project
 % move second dummy away
 proc InitAandB =
     InitA .
     GetWaferFromInAndMeasure .
     swap .
     swap_done .
-    project .
-    project_done .
+    %project .
+    %project_done .
     move_r3(Meas, Empty2) .
     move_r3_done;
 
