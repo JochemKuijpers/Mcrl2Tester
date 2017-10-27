@@ -1,43 +1,46 @@
 sort 
-	ChuckType = struct A | B | AB;
+    ChuckType = struct A | B | AB;
 
 sort 
-	Position = struct Tray | In | Out | Meas | Proj | Empty1 | Empty2;
+    Position = struct Tray | In | Out | Meas | Proj | Empty1 | Empty2;
 
 act 
- 	%Signal Communication
+    %Signal Communication
 
-	%IO <-> Tray
-	init_io_read, init_io_send, signal_init_io: Nat;
-	io_done_send, io_done_read, signal_io_done;
+    %IO <-> Tray
+    init_io_read, init_io_send, signal_init_io: Nat;
+    io_done_send, io_done_read, signal_io_done;
 	
-	%Recipe <-> Tray
-	init_recipe_read, init_recipe_send, signal_init_recipe: Nat # ChuckType;
-	recipe_done_send, recipe_done_read, signal_recipe_done;
+    %Recipe <-> Tray
+    init_recipe_read, init_recipe_send, signal_init_recipe: Nat # ChuckType;
+    recipe_done_send, recipe_done_read, signal_recipe_done;
 
-	%IO <-> Recipe
-	get_wafer_send, get_wafer_read, signal_get_wafer;
-	return_wafer_send, return_wafer_read, signal_return_wafer;
-	out_empty_send, out_empty_read, signal_out_empty;
-	in_full_send, in_full_read, signal_in_full;
+    %IO <-> Recipe
+    get_wafer_send, get_wafer_read, signal_get_wafer;
+    return_wafer_send, return_wafer_read, signal_return_wafer;
+    out_empty_send, out_empty_read, signal_out_empty;
+    in_full_send, in_full_read, signal_in_full;
 	
-	%Recipe Controller actions
-	move_r2: Position # Position;
-	move_r2_done;
-	move_r3: Position # Position;
-	move_r3_done;
+    %Recipe Controller actions
+    move_r2, move_r3: Position # Position;
+    move_r2_done, move_r3_done;
+    swap, swap_done;
+    measure, measure_done;
+    project, project_done;
 	
-	swap, swap_done;
-	measure, measure_done;
-	project, project_done;
-	
-	%Tray Controller actions
-	start, calibrate, calibrate_done, tray_done;
-	lot_info: Nat # ChuckType;
+    %Tray Controller actions
+    start, calibrate, calibrate_done, tray_done;
+    lot_info: Nat # ChuckType;
 
-	%IO Controller actions
-	move_r1: Position # Position;
-	move_r1_done, premeasure, premeasure_done;
+    %IO Controller actions
+    move_r1: Position # Position;
+    move_r1_done, premeasure, premeasure_done;
+
+% GetWaferFromInAndMeasure
+% Get a premeasured wafer from the In/Out Controller and measure it
+% Two-way handshaking is used
+% first indicate the need for a wafer by activation "get_wafer_send".
+% Then wait until "in_full_read" before moving the wafer to Meas and Measure it.
 
 proc GetWaferFromInAndMeasure =
     get_wafer_send .
@@ -46,12 +49,23 @@ proc GetWaferFromInAndMeasure =
     move_r2_done .
     measure .
     measure_done;
+    
+% MoveToOut
+% Put a processed wafer at the Out position,
+% then let the I/O Controller put it back in the tray.
+% Two-way handshaking is used,
+% first indicate that a wafer is ready to put back to the tray 
+% by activating "return_wafer_send" then wait for "out_empty_read" before proceeding
 
 proc MoveToOut =
     move_r3(Meas,Out) .
     move_r3_done .
     return_wafer_send .
     out_empty_read;
+    
+% ProjectAndMoveToOut
+% Project a wafer and move it to out.
+% first project, swap and call MoveToOut
 
 proc ProjectAndMoveToOut =
     project .
@@ -60,22 +74,32 @@ proc ProjectAndMoveToOut =
     swap_done .
     MoveToOut;
 
+% ProcessAorB
+% This is the general sequence for processing a single wafer on chuck A or B 
+% and a dummy wafer on the other chuck
+
 proc ProcessAorB =
     GetWaferFromInAndMeasure .
     swap .
     swap_done .
     ProjectAndMoveToOut;
 
+% ProcessAandB
+% This is the general sequence for processing one wafer on either chuck. 
+
 proc ProcessAandB =
     GetWaferFromInAndMeasure .
     ProjectAndMoveToOut;
 
+
 % InitAandB
+% initialize the swap unit for processing on both chucks
 % chuck A is at the Meas position. move dummy away
 % get first wafer
 % swap
 % do not project
 % move second dummy away
+
 proc InitAandB =
     InitA .
     GetWaferFromInAndMeasure .
@@ -86,11 +110,27 @@ proc InitAandB =
     move_r3(Meas, Empty2) .
     move_r3_done;
 
-%DeInitAandB
+% DeInitAandB
+% De-initialize the swap unit after processing on both chucks
+% 1) project the second last wafer
+% 2) get a the last wafer from In 
+% 3) swap
+% 4) project the last wafer
+% 5) move the second last wafer to Out
+% 6) move the first dummy wafer back
+% 7) swap
+% 8) move the last processed wafer to out
+% 9) move the second dummy wafer back
+
 proc DeInitAandB =
     project .
     project_done .
-    ProcessAandB .
+    GetWaferFromInAndMeasure .
+    swap .
+    swap_done .
+    project .
+    project_done .
+    MoveToOut .
     move_r2(Empty1, Meas) .
     move_r2_done .
     swap .
@@ -99,34 +139,43 @@ proc DeInitAandB =
     move_r3(Empty2, Meas) .
     move_r3_done;
 
-%InitA
+% InitA
 % chuck A is at the Meas position. move dummy away
+
 proc InitA =
     move_r2(Meas, Empty1) .
     move_r2_done;
 
-%DeInitA
+% DeInitA
 % chuck A is at the Meas position. put dummy back
+
 proc DeInitA =
     move_r2(Empty1, Meas) .
     move_r2_done;
 
-%InitB
+% InitB
 % chuck A is at the Meas position. swap first then move away the dummy
+
 proc InitB =
     swap .
     swap_done .
     move_r2(Meas, Empty1) .
     move_r2_done;
 
-%DeInitB
+% DeInitB
 % chuck B is at the Meas position. put dummy back and swap.
+
 proc DeInitB =
     move_r2(Empty1, Meas) .
     move_r2_done .
     swap .
     swap_done;
 
+% ProcessRecipeAorB
+% This is the general function for processing a single wafer.
+% parameters: 
+% n is the number of wafers to process.
+% c is the chuck type to process on. 
 
 proc ProcessRecipeAorB(n:Nat, c:ChuckType) =
 	(c==A) -> (
@@ -152,6 +201,15 @@ proc ProcessRecipeAorB(n:Nat, c:ChuckType) =
         )
     );
 
+
+% ProcessRecipeAandB
+% This is the general function for processing on both chucks. 
+% Parameters: 
+% n is the number of wafers to process
+% b indicates an even (true) or uneven (false) number of wafers to process.
+% b is used when the swap unit is de-initialized 
+% so that chuck A can be set at the Meas position. 
+
 proc ProcessRecipeAandB(n:Nat, b:Bool) =
 	(b) -> (
 	    (n>1) -> (
@@ -175,53 +233,69 @@ proc ProcessRecipeAandB(n:Nat, b:Bool) =
 	    )
     );
 
-proc Recipe_controller(n:Nat, c:ChuckType) =
-	(n==0) -> (
-	    sum n:Nat, c:ChuckType .
-	    init_recipe_read(n, c) .
-	    (
-            (c==A) -> (
-                InitA .
-                ProcessRecipeAorB(n,c)
-            ) +
-            (c==B) -> (
-                InitB .
-                ProcessRecipeAorB(n,c)
-            ) +
-            (c==AB) -> (
-                (n==1) -> (
-                    InitA .
-                    ProcessAorB .
-                    DeInitA .
-                    recipe_done_send .
-                    Recipe_controller(0, c)
-                ) <> (
-                    ((n mod 2)==0) -> (
-                        InitAandB .
-                        ProcessRecipeAandB(max(0, n-1), true)
-                    ) <> (
-                        InitAandB .
-                        ProcessRecipeAandB(max(0, n-1), false)
-                    )
-                )
-            )
-        )
-    ) <> (
-        recipe_done_send .
-        Recipe_controller(0, AB)
-    );
-			
+% Recipe_controller
+% The main recipe controller
+proc Recipe_controller =
+    sum n:Nat, c:ChuckType . %(n==2)->(c==AB)->
+    init_recipe_read(n, c) . (
+        (c==A) -> ( % process A
+	    InitA .
+	    ProcessRecipeAorB(n,c)
+	) +
+	(c==B) -> ( % process B
+	    InitB .
+	    ProcessRecipeAorB(n,c)
+	) +
+	(c==AB) -> ( % process AB
+	    (n==1) -> ( % only one wafer,use process A
+		InitA .
+		ProcessAorB .
+		DeInitA .
+		recipe_done_send .
+		Recipe_controller
+            ) <> ( % two or more wafers use process AB
+		((n mod 2)==0) -> ( % even number of wafers
+		    InitAandB .
+		    ProcessRecipeAandB(max(0, n-1), true)
+	    ) <> (              % uneven number of wafers
+		InitAandB .
+		ProcessRecipeAandB(max(0, n-1), false)
+	    )
+	)
+    )
+); 
+	
+% GetWafer
+% The process is triggered by the action "get_wafer_read".
+% That is the sequential process of getting a new wafer from the Tray.
+% It includes the action premeasure, and signaling 
+% the Recipe Controller with the status of In position.
+
 proc GetWafer = 
     move_r1(Tray, In) .
     move_r1_done .
     premeasure .
     premeasure_done .
     in_full_send;
+    
+% ReturnWafer
+% The process is triggered by the action "return_wafer_read".
+% That is the sequential process of returning a processed wafer to the Tray.
+% It also signals the Recipe Controller with the status of Out position.
 
 proc ReturnWafer = 
     move_r1(Out, Tray) .
     move_r1_done .
     out_empty_send;
+    
+% IOProcess
+% It is the sub-process of IO_Controller.
+% Only when finishing all the wafers in the current lot, 
+% it will signal the Tray controller to indicate the accomplishment of operations.
+% Parameters: 
+% Both n and i are initialized as the total number of wafers to process ,
+% during the process n indicates the times of getting wafers from the Tray,
+% and i indicates the times of returning wafers to the Tray.
 													
 proc IOProcess(n:Nat, i:Nat) =
     get_wafer_read .
@@ -237,17 +311,30 @@ proc IOProcess(n:Nat, i:Nat) =
         ReturnWafer .
         io_done_send
     );
+    
+% IO_controller
+% The main In/Out controller
+% Parameters: 
+% n is the number of wafers to process.
 
 proc IO_Controller (n: Nat) = 
     (n==0) -> (
         sum n:Nat .
-        init_io_read(n) .
+        init_io_read(n) . % wait for the initialization sign
         IO_Controller(n)
     ) +
     (n>0) -> (
         IOProcess(n, n) .
-        IO_Controller(0)
+        IO_Controller(0) % finished the current lot.
     );
+    
+% TrayProcess
+% It is the sub-process of Tray_Controller.
+% It initializes both the IO_Controller and the Recipe_Controller after calibration
+% and wait for the accomplishment signals from these two controller as well.
+% Parameters: 
+% n is the number of wafers to process.
+% c is the chuck type to process on. 
 
 proc TrayProcess (n:Nat, c:ChuckType) = 
 	calibrate .
@@ -266,6 +353,13 @@ proc TrayProcess (n:Nat, c:ChuckType) =
 		recipe_done_read .
 		io_done_read
 	);
+	
+% Tray_controller
+% The main Tray controller
+% Action lot_info brings the information of current lot to the Tray Controller
+% Returned n equalling zero indicates the completion of all the lots on the Tray.
+% Parameters: 
+% b is Boolean to indicate whether the start button is triggered or not.
 
 proc Tray_Controller (b:Bool) =
     (b==false) -> (
@@ -277,8 +371,8 @@ proc Tray_Controller (b:Bool) =
             lot_info(n, c)
         ) .
         (n==0) -> (
-            tray_done .
-            Tray_Controller(false)
+            tray_done . 
+            Tray_Controller(false) 
         ) <> (
             TrayProcess(n, c) .
             Tray_Controller(true)
