@@ -97,7 +97,6 @@ proc ProcessAandB =
 % chuck A is at the Meas position. move dummy away
 % get first wafer
 % swap
-% do not project
 % move second dummy away
 
 proc InitAandB =
@@ -105,8 +104,6 @@ proc InitAandB =
     GetWaferFromInAndMeasure .
     swap .
     swap_done .
-    %project .
-    %project_done .
     move_r3(Meas, Empty2) .
     move_r3_done;
 
@@ -186,7 +183,7 @@ proc ProcessRecipeAorB(n:Nat, c:ChuckType) =
 	        ProcessAorB .
 	        DeInitA .
 	        recipe_done_send .
-	        Recipe_controller(0, c)
+	        Recipe_controller
         )
     ) +
 	(c==B) -> (
@@ -197,7 +194,7 @@ proc ProcessRecipeAorB(n:Nat, c:ChuckType) =
             ProcessAorB .
             DeInitB .
             recipe_done_send .
-            Recipe_controller(0, c)
+            Recipe_controller
         )
     );
 
@@ -401,6 +398,6 @@ init
             },
             Tray_Controller(false) ||
             IO_Controller(0) ||
-            Recipe_controller(0,A)
+            Recipe_controller
         )
     );
