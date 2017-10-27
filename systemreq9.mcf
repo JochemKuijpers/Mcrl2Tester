@@ -1,5 +1,3 @@
-% This formula evaluates to false.. I don't know why, or how :\
-
 % If you move a wafer to Out, then an empty chuck remains.
 % Then it MUST be possible to either place the dummy wafer on Empty1
 % or place the dummy wafer on Empty2 to Meas.
