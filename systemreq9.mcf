@@ -16,8 +16,9 @@
     [move_r2(Meas, Out)] X(max(0,n-1)) &&
     [!(move_r2(Meas, Out) || exists m:Nat, q:ChuckType . lot_info(m, q))] X(n) &&
     %next line is: a Dummy will be moved from Empty to Meas will happen after the last wafer is moved to Out
-    (val( n == 0 ) => mu Y . [ !(move_r2(Empty1, Meas) || move_r3(Empty2, Meas))] X(0)) ||
+    (((val( n == 0 )) => mu Y . [ !(move_r2(Empty1, Meas) || move_r3(Empty2, Meas))] X(0)) &&
     %If that move didn't happen and a tray_done happened then it's a false
     [ tray_done ] false &&
     <true> true
+    )
 )
