@@ -1,0 +1,2 @@
+% projection will not happen again if no swap took place
+[true* . project_done . !(swap)* . project] false
