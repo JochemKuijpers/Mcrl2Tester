@@ -7,7 +7,7 @@ nu X(dummyMeas: Bool = true, dummyProj: Bool = true) . (
     [swap] X(dummyProj, dummyMeas) &&
     % Moving in a dummy wafer sets dummyMeas to true
     [move_r2(Empty1, Meas)] X(true, dummyProj) &&
-    [move_r3(Empty2, Meas)] X(false, dummyProj) &&
+    [move_r3(Empty2, Meas)] X(true, dummyProj) &&
     % Moving out a dummy wafer sets dummyMeas to false
     [move_r2(Meas, Empty1)] X(false, dummyProj) &&
     [move_r3(Meas, Empty2)] X(false, dummyProj) &&

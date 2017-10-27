@@ -1,1 +1,10 @@
-[true*] . [ move_r3(Meas, Out) . !(move_r2(In, Meas))* ] . < move_r2(Empty1, Meas) || move_r3(Empty2, Meas) > true
+% This formula evaluates to false.. I don't know why, or how :\
+
+% If you move a wafer to Out, then an empty chuck remains.
+% Then it MUST be possible to either place the dummy wafer on Empty1
+% or place the dummy wafer on Empty2 to Meas.
+
+[true* .
+    (move_r3(Meas, Out)) .
+    !(move_r2(In, Meas) || move_r2(Empty1, Meas) || move_r3(Empty2, Meas))*
+] <move_r2(Empty1, Meas) || move_r3(Empty2, Meas)> true
