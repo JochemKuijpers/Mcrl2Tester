@@ -88,6 +88,8 @@ proc InitAandB =
 
 %DeInitAandB
 proc DeInitAandB =
+    project .
+    project_done .
     ProcessAandB .
     move_r2(Empty1, Meas) .
     move_r2_done .
