@@ -1,5 +1,3 @@
-% This formula evaluates to false.. :\?
-
 % (a) Chuck A is on the Meas place and chuck B is on the Proj place
 % meas = whether or not chuck A is on the Meas place
 [true* . start]

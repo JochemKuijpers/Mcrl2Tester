@@ -17,5 +17,3 @@ nu X (meas: Bool = true, waferType: ChuckType = t) . (
     % swap and any lot_info
     [!(swap || exists m:Nat, q:ChuckType . lot_info(m,q))] X(meas, waferType)
 )
-
-
