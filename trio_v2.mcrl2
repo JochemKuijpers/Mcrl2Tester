@@ -373,7 +373,7 @@ proc Tray_Controller (b:Bool) =
         start .
         Tray_Controller(true)
     ) <> (
-        sum n:Nat. c:ChuckType .
+        sum n:Nat, c:ChuckType .
         (n==3) -> (
             lot_info(n, c)
         ) .
