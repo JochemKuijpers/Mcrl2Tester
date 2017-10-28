@@ -6,24 +6,32 @@
 [true* . move_r2(In, Meas) . (!swap)* . move_r3(Meas, Out)]false &&
 
 % (c) Any wafer passing from In through Meas and to Proj must be projected before swapping again
-% [true* . swap . (!project)* . swap . (!swap)* . move_r3(Meas, Out)]false
-[true* . project_done . (!swap)* . move_r3(Meas, Out)] false &&
+% hasProjected = whether or not a wafer has been projected
+[true* . measure_done . !swap* . swap]
+nu X(hasProjected: Bool = false) . (
+    % hasProjected becomes true when projecting
+    [project] X(true) &&
+    % hasProjected must be true when swapping (since the wafer was already swapped to Proj)
+    [swap] val(!hasProjected => false) &&
+    % for any other action, no variable changes
+    [!(swap || project)] X(hasProjected)
+) &&
 
 % (d) Eventually we will move every processed wafer back into the tray
 % nIn = number of wafers in this lot to take from the tray
 % nOut = number of wafers in this lot to put back in the tray
 [true*] forall t: ChuckType . forall n: Nat . [lot_info(n,t)]
-nu X(nIn: Nat = n, nOut: Nat = n) . (
+nu Y(nIn: Nat = n, nOut: Nat = n) . (
     % when taking a wafer out of the tray, decrease nIn by 1
-    [move_r1(Tray, In)] X(max(0, nIn-1), nOut) &&
+    [move_r1(Tray, In)] Y(max(0, nIn-1), nOut) &&
     % when putting a wafer into the tray, decrease nOut by 1
-    [move_r1(Out, Tray)] X(nIn, max(0, nOut-1)) &&
+    [move_r1(Out, Tray)] Y(nIn, max(0, nOut-1)) &&
     % whenever lot_info happens, nIn = nOut = 0 should hold and after
-    % that, X should hold with the number of wafers in the new lot
+    % that, Y should hold with the number of wafers in the new lot
     forall newWafers: Nat, newLot: ChuckType .
     [lot_info(newWafers, newLot)] (val(nIn == 0 && nOut == 0)
-        && X(newWafers, newWafers)) &&
-    % in any other action, X(nIn, nOut) should hold
+        && Y(newWafers, newWafers)) &&
+    % in any other action, Y(nIn, nOut) should hold
     [!(move_r1(Tray, In) || move_r1(Out, Tray)
-        || exists m:Nat, q:ChuckType . lot_info(m,q))] X(nIn, nOut)
+        || exists m:Nat, q:ChuckType . lot_info(m,q))] Y(nIn, nOut)
 )
