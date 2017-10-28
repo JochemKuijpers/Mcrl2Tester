@@ -2,11 +2,11 @@
 
 % (a) Chuck A is on the Meas place and chuck B is on the Proj place
 % meas = whether or not chuck A is on the Meas place
-[true* .start ]
+[true* . start]
 nu X(meas: Bool = true) . (
     [swap] X(!meas) &&
     [tray_done] val(meas) &&
-    [!swap] X(meas)
+    [!(swap || tray_done)] X(meas)
 )
 
 % (b) Dummy wafers are placed on A and B chucks

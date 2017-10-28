@@ -208,26 +208,17 @@ proc ProcessRecipeAorB(n:Nat, c:ChuckType) =
 % so that chuck A can be set at the Meas position. 
 
 proc ProcessRecipeAandB(n:Nat, b:Bool) =
-    (b) -> (
-        (n>1) -> (
-            ProcessAandB .
-            ProcessRecipeAandB(max(0, n-1), b)
-        ) <> (
-            DeInitAandB .
-            recipe_done_send .
-            Recipe_controller
-        )
+    (n>1) -> (
+        ProcessAandB .
+        ProcessRecipeAandB(max(0, n-1), b)
     ) <> (
-        (n>1) -> (
-            ProcessAandB .
-            ProcessRecipeAandB(max(0, n-1), b)
-        ) <> (
-            DeInitAandB .
+        DeInitAandB .
+        (b) -> (
             swap .
-            swap_done .
-            recipe_done_send .
-            Recipe_controller
-        )
+            swap_done
+        ) .
+        recipe_done_send .
+        Recipe_controller
     );
 
 % Recipe_controller
@@ -372,14 +363,14 @@ proc Tray_Controller (b:Bool) =
     ) <> (
         sum n:Nat, c:ChuckType .
         (n<3) -> (
-            lot_info(n, c)
-        ) .
-        (n==0) -> (
-            tray_done .
-            Tray_Controller(false)
-        ) <> (
-            TrayProcess(n, c) .
-            Tray_Controller(true)
+            lot_info(n, c) .
+            (n==0) -> (
+                tray_done .
+                Tray_Controller(false)
+            ) <> (
+                TrayProcess(n, c) .
+                Tray_Controller(true)
+            )
         )
     );
 
