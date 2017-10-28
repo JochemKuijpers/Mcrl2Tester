@@ -10,7 +10,7 @@ act
     %IO <-> Tray
     init_io_read, init_io_send, signal_init_io: Nat;
     io_done_send, io_done_read, signal_io_done;
-	
+    
     %Recipe <-> Tray
     init_recipe_read, init_recipe_send, signal_init_recipe: Nat # ChuckType;
     recipe_done_send, recipe_done_read, signal_recipe_done;
@@ -20,14 +20,14 @@ act
     return_wafer_send, return_wafer_read, signal_return_wafer;
     out_empty_send, out_empty_read, signal_out_empty;
     in_full_send, in_full_read, signal_in_full;
-	
+    
     %Recipe Controller actions
     move_r2, move_r3: Position # Position;
     move_r2_done, move_r3_done;
     swap, swap_done;
     measure, measure_done;
     project, project_done;
-	
+    
     %Tray Controller actions
     start, calibrate, calibrate_done, tray_done;
     lot_info: Nat # ChuckType;
@@ -175,21 +175,21 @@ proc DeInitB =
 % c is the chuck type to process on. 
 
 proc ProcessRecipeAorB(n:Nat, c:ChuckType) =
-	(c==A) -> (
-	    (n>1) -> (
-	        ProcessAorB .
-	        ProcessRecipeAorB(max(0, n-1), c)
-	    ) <> (
-	        ProcessAorB .
-	        DeInitA .
-	        recipe_done_send .
-	        Recipe_controller
+    (c==A) -> (
+        (n>1) -> (
+            ProcessAorB .
+            ProcessRecipeAorB(max(0, n-1), c)
+        ) <> (
+            ProcessAorB .
+            DeInitA .
+            recipe_done_send .
+            Recipe_controller
         )
     ) +
-	(c==B) -> (
-	    (n>1) -> (
-	        ProcessAorB .
-	        ProcessRecipeAorB(max(0, n-1), c)
+    (c==B) -> (
+        (n>1) -> (
+            ProcessAorB .
+            ProcessRecipeAorB(max(0, n-1), c)
         ) <> (
             ProcessAorB .
             DeInitB .
@@ -208,102 +208,99 @@ proc ProcessRecipeAorB(n:Nat, c:ChuckType) =
 % so that chuck A can be set at the Meas position. 
 
 proc ProcessRecipeAandB(n:Nat, b:Bool) =
-	(b) -> (
-	    (n>1) -> (
-	        ProcessAandB .
-	        ProcessRecipeAandB(max(0, n-1), b)
-	    ) <> (
-	        DeInitAandB .
-	        recipe_done_send .
-	        Recipe_controller
-	    )
-	) <> (
-	    (n>1) -> (
-	        ProcessAandB .
-	        ProcessRecipeAandB(max(0, n-1), b)
-	    ) <> (
-	        DeInitAandB .
-	        swap .
-	        swap_done .
-	        recipe_done_send .
-	        Recipe_controller
-	    )
+    (b) -> (
+        (n>1) -> (
+            ProcessAandB .
+            ProcessRecipeAandB(max(0, n-1), b)
+        ) <> (
+            DeInitAandB .
+            recipe_done_send .
+            Recipe_controller
+        )
+    ) <> (
+        (n>1) -> (
+            ProcessAandB .
+            ProcessRecipeAandB(max(0, n-1), b)
+        ) <> (
+            DeInitAandB .
+            swap .
+            swap_done .
+            recipe_done_send .
+            Recipe_controller
+        )
     );
 
 % Recipe_controller
 % The main recipe controller
 proc Recipe_controller =
-    sum n:Nat, c:ChuckType .(n<4)->
-    (
-    	init_recipe_read(n, c) . 
-	(
-            (c==A) -> 
-	    ( % process A
-	        InitA .
-	        ProcessRecipeAorB(n,c)
-	    ) +
-	    (c==B) -> 
-	    ( % process B
-	        InitB .
-	        ProcessRecipeAorB(n,c)
-	    ) +
-	    (c==AB) -> 
-	    ( % process AB
-	        (n==1) -> 
-	        ( % only one wafer,use process A
-		    InitA .
-		    ProcessAorB .
-		    DeInitA .
-		    recipe_done_send .
-		    Recipe_controller
-                ) <> 
-		( % two or more wafers use process AB
-		    ((n mod 2)==0) -> 
-		    ( % even number of wafers
-		        InitAandB .
-		        ProcessRecipeAandB(max(0, n-1), true)
-	            ) <> 
-		    (              % uneven number of wafers
-		        InitAandB .
-		        ProcessRecipeAandB(max(0, n-1), false)
-	            )
-	        )
+    sum n:Nat, c:ChuckType .
+    init_recipe_read(n, c) . (
+        (c==A) -> (
+            % process A
+            InitA .
+            ProcessRecipeAorB(n,c)
+        ) +
+        (c==B) -> (
+            % process B
+            InitB .
+            ProcessRecipeAorB(n,c)
+        ) +
+        (c==AB) -> (
+            % process AB
+            (n==1) -> (
+                % only one wafer,use process A
+                InitA .
+                ProcessAorB .
+                DeInitA .
+                recipe_done_send .
+                Recipe_controller
+            ) <> (
+                % two or more wafers use process AB
+                ((n mod 2)==0) -> (
+                    % even number of wafers
+                    InitAandB .
+                    ProcessRecipeAandB(max(0, n-1), true)
+                ) <> (
+                    % uneven number of wafers
+                    InitAandB .
+                    ProcessRecipeAandB(max(0, n-1), false)
+                )
             )
-        )  
-    ); 
-	
+        )
+    );
+
 % GetWafer
 % The process is triggered by the action "get_wafer_read".
 % That is the sequential process of getting a new wafer from the Tray.
-% It includes the action premeasure, and signaling 
+% It includes the action premeasure, and signaling
 % the Recipe Controller with the status of In position.
 
-proc GetWafer = 
+proc GetWafer =
     move_r1(Tray, In) .
     move_r1_done .
     premeasure .
     premeasure_done .
     in_full_send;
-    
+
 % ReturnWafer
 % The process is triggered by the action "return_wafer_read".
 % That is the sequential process of returning a processed wafer to the Tray.
 % It also signals the Recipe Controller with the status of Out position.
 
-proc ReturnWafer = 
+proc ReturnWafer =
     move_r1(Out, Tray) .
     move_r1_done .
     out_empty_send;
-    
+
 % IOProcess
 % It is the sub-process of IO_Controller.
-% Only when finishing all the wafers in the current lot, 
+% Only when finishing all the wafers in the current lot,
 % it will signal the Tray controller to indicate the accomplishment of operations.
-% Parameters: 
+% Parameters:
 % Both n and i are initialized as the total number of wafers to process ,
 % during the process n indicates the times of getting wafers from the Tray,
 % and i indicates the times of returning wafers to the Tray.
-													
+
 proc IOProcess(n:Nat, i:Nat) =
     get_wafer_read .
     (n>0) -> (
@@ -318,13 +315,13 @@ proc IOProcess(n:Nat, i:Nat) =
         ReturnWafer .
         io_done_send
     );
-    
+
 % IO_controller
 % The main In/Out controller
-% Parameters: 
+% Parameters:
 % n is the number of wafers to process.
 
-proc IO_Controller (n: Nat) = 
+proc IO_Controller (n: Nat) =
     (n==0) -> (
         sum n:Nat .
         init_io_read(n) . % wait for the initialization sign
@@ -334,38 +331,38 @@ proc IO_Controller (n: Nat) =
         IOProcess(n, n) .
         IO_Controller(0) % finished the current lot.
     );
-    
+
 % TrayProcess
 % It is the sub-process of Tray_Controller.
 % It initializes both the IO_Controller and the Recipe_Controller after calibration
 % and wait for the accomplishment signals from these two controller as well.
-% Parameters: 
+% Parameters:
 % n is the number of wafers to process.
-% c is the chuck type to process on. 
+% c is the chuck type to process on.
 
-proc TrayProcess (n:Nat, c:ChuckType) = 
-	calibrate .
-	calibrate_done .
-	(
-		init_io_send(n) .
-		init_recipe_send(n, c)
-		+
-		init_recipe_send(n, c) .
-		init_io_send(n)
-	) .
-	(
-		io_done_read .
-		recipe_done_read
-		+ 
-		recipe_done_read .
-		io_done_read
-	);
-	
+proc TrayProcess (n:Nat, c:ChuckType) =
+    calibrate .
+    calibrate_done .
+    (
+        init_io_send(n) .
+        init_recipe_send(n, c)
+        +
+        init_recipe_send(n, c) .
+        init_io_send(n)
+    ) .
+    (
+        io_done_read .
+        recipe_done_read
+        +
+        recipe_done_read .
+        io_done_read
+    );
+
 % Tray_controller
 % The main Tray controller
 % Action lot_info brings the information of current lot to the Tray Controller
 % Returned n equalling zero indicates the completion of all the lots on the Tray.
-% Parameters: 
+% Parameters:
 % b is Boolean to indicate whether the start button is triggered or not.
 
 proc Tray_Controller (b:Bool) =
@@ -374,21 +371,21 @@ proc Tray_Controller (b:Bool) =
         Tray_Controller(true)
     ) <> (
         sum n:Nat, c:ChuckType .
-        (n<3) -> (
+        (n>0 && n<3) -> (
             lot_info(n, c)
         ) .
         (n==0) -> (
-            tray_done . 
-            Tray_Controller(false) 
+            tray_done .
+            Tray_Controller(false)
         ) <> (
             TrayProcess(n, c) .
             Tray_Controller(true)
         )
     );
 
-init 
-	allow(
-	    {
+init
+    allow(
+        {
             signal_init_io, signal_init_recipe, signal_recipe_done, signal_get_wafer,
             signal_return_wafer, signal_out_empty, signal_io_done, signal_in_full,
             start, calibrate, calibrate_done, move_r1, move_r1_done, tray_done,
