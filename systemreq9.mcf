@@ -1,24 +1,10 @@
-% If a move from Meas to Out happend, then an empty chuck remains.
-% Then it MUST be possible to either place the dummy wafer from Empty1
-% or place the dummy wafer from Empty2 to Meas.
-
-% [true* .
-%     (move_r3(Meas, Out)) .
-%     !(move_r2(In, Meas) || move_r2(Empty1, Meas) || move_r3(Empty2, Meas))*
-% ] <move_r2(Empty1, Meas) || move_r3(Empty2, Meas)> true
-
-%Dummies will be used when no more wafers from In chuck are available:
-%this will happen when move_r2(In, Meas) repeat N times
-
-[true* . start ] nu X (num: Nat = 0) . (
-    forall n: Nat, t: ChuckType .
-    [ lot_info (n, t) ] X(n) &&
-    [move_r2(Meas, Out)] X(max(0,n-1)) &&
-    [!(move_r2(Meas, Out) || exists m:Nat, q:ChuckType . lot_info(m, q))] X(n) &&
-    %next line is: a Dummy will be moved from Empty to Meas will happen after the last wafer is moved to Out
-    (((val( n == 0 )) => mu Y . [ !(move_r2(Empty1, Meas) || move_r3(Empty2, Meas))] X(0)) &&
-    %If that move didn't happen and a tray_done happened then it's a false
-    [ tray_done ] false &&
-    <true> true
-    )
+% Dummies will only be used when no more wafers from In chuck are available:
+% this will happen when move_r2(In, Meas) has happened n times for each lot
+[true*] forall n: Nat, t: ChuckType . [lot_info(n, t)]
+nu X (num: Nat = n) . (
+    % every time a wafer is moved from In to Meas, one less wafer is available
+    % from the lot, until none are left of the lot.
+    [move_r2(In, Meas)] X(max(0, num-1)) &&
+    % when a dummy is used, it is because no more wafers of the lot were available
+    [move_r2(Empty1, Meas) + move_r3(Empty2, Meas)] val(num == 0)
 )
