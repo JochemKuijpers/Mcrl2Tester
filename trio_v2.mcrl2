@@ -269,7 +269,6 @@ proc Recipe_controller =
         )
     );
 
-
 % GetWafer
 % The process is triggered by the action "get_wafer_read".
 % That is the sequential process of getting a new wafer from the Tray.
@@ -372,7 +371,7 @@ proc Tray_Controller (b:Bool) =
         Tray_Controller(true)
     ) <> (
         sum n:Nat, c:ChuckType .
-        (n>0 && n<3) -> (
+        (n<3) -> (
             lot_info(n, c)
         ) .
         (n==0) -> (
