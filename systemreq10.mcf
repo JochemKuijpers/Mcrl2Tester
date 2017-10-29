@@ -10,4 +10,13 @@
 % two wafers are processed then the third may go on top of the second if it
 % wasn't removed. Whenever a wafer is moved from Meas to Out chuck another one
 % cannot follow if no move from Out to Tray happened.
-[true* . move_r2(Meas, Out) . !(move_r1(Out, Tray))* . move_r2(Meas, Out)]false
+[true* . move_r2(Meas, Out) . !(move_r1(Out, Tray))* . move_r2(Meas, Out)]false &&
+
+% Note: collisions from dummy wafers moving to Meas are already captured by
+% requirement 9. The only things that's left are placing two dummy wafers on the
+% same location. It cannot happen that two moves to a empty place happen without
+% moving something back inbetween.
+[true* . move_r2(Meas, Empty1) . !(move_r2(Empty1, Meas))*
+    . move_r2(Meas, Empty1)]false &&
+[true* . move_r3(Meas, Empty2) . !(move_r3(Empty2, Meas))*
+    . move_r3(Meas, Empty2)]false
