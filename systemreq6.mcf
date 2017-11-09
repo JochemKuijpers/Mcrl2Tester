@@ -1,16 +1,19 @@
 % After start, Meas and Proj contain dummy wafers.
 % dummyMeas = whether or not a dummy wafer is at Meas
 % dummyProj = whether or not a dummy wafer is at Proj
+% dummyEmpty1 = whether or not a dummy wafer is at Empty1
+% dummyEmpty2 = whether or not a dummy wafer is at Empty2
 [true* . start]
-nu X(dummyMeas: Bool = true, dummyProj: Bool = true) . (
-    % When swap happens, the boolean values swap places
-    [swap] X(dummyProj, dummyMeas) &&
-    % Moving in a dummy wafer sets dummyMeas to true
-    [move_r2(Empty1, Meas)] X(true, dummyProj) &&
-    [move_r3(Empty2, Meas)] X(true, dummyProj) &&
-    % Moving out a dummy wafer sets dummyMeas to false
-    [move_r2(Meas, Empty1)] X(false, dummyProj) &&
-    [move_r3(Meas, Empty2)] X(false, dummyProj) &&
+nu X(dummyMeas: Bool = true, dummyProj: Bool = true, 
+        dummyEmpty1: Bool = false, dummyEmpty2: Bool = false) . (
+    % When swap happens, the Proj and Meas swap places
+    [swap] X(dummyProj, dummyMeas, dummyEmpty1, dummyEmpty2) &&
+    % Moving a dummy from empty places
+    [move_r2(Empty1, Meas)] X(dummyEmpty1, dummyProj, false, dummyEmpty2) &&
+    [move_r3(Empty2, Meas)] X(dummyEmpty2, dummyProj, dummyEmpty1, false) &&
+    % Moving a dummy to empty places
+    [move_r2(Meas, Empty1)] X(false, dummyProj, dummyMeas, dummyEmpty2) &&
+    [move_r3(Meas, Empty2)] X(false, dummyProj, dummyEmpty1, dummyMeas) &&
     % When project or measure happens, it cannot be on a dummy wafer
     [project] (val(dummyProj) => false) &&
     [measure] (val(dummyMeas) => false) &&
@@ -19,5 +22,5 @@ nu X(dummyMeas: Bool = true, dummyProj: Bool = true) . (
         swap || project || measure ||
         move_r2(Empty1, Meas) || move_r2(Meas, Empty1) ||
         move_r3(Empty2, Meas) || move_r3(Meas, Empty2)
-     )] X(dummyMeas, dummyProj)
+     )] X(dummyMeas, dummyProj, dummyEmpty1, dummyEmpty2)
 )

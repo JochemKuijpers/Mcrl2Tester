@@ -1,5 +1,6 @@
-% Dummies will only be used when no more wafers from In chuck are available:
-% this will happen when move_r2(In, Meas) has happened n times for each lot
+% Dummies will only be used when no more wafers from the In chuck are 
+% available. This will happen when move_r2(In, Meas) has happened n times for 
+% each lot
 [true*] forall n: Nat, t: ChuckType . [lot_info(n, t)]
 nu X (num: Nat = n) . (
     % every time a wafer is moved from In to Meas, one less wafer is available

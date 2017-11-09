@@ -5,5 +5,5 @@
 [true* . forall t: ChuckType . lot_info(0, t)]
 mu X . (
     [!tray_done] X &&
-    [tray_done] true
+    [tray_done] <true> true
 )

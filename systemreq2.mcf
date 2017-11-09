@@ -2,7 +2,7 @@
 % waferType = The type of wafers in the current lot (ChuckType = A, B or AB)
 
 [true*] forall n: Nat, t: ChuckType . [ lot_info(n, t)]
-% X(true,t) should hold after the first lot_info(n, t):
+% X(true,t) should hold after any lot_info(n, t):
 nu X (meas: Bool = true, waferType: ChuckType = t) . (
     % Swap changes the chuck type at Meas
     [swap] X(!meas, waferType) &&
@@ -12,7 +12,7 @@ nu X (meas: Bool = true, waferType: ChuckType = t) . (
     % When moving to Meas from In, the chuck should be A for lots of A
     % and the chuck should be B for lots of B. Lots of AB don't matter
     [move_r2(In, Meas)]
-        val((waferType == A) => meas && (waferType == B) => !meas) &&
+        val(((waferType == A) => meas) && ((waferType == B) => !meas)) &&
     % X(meas,waferType) should hold after all actions other than 
     % swap and any lot_info
     [!(swap || exists m:Nat, q:ChuckType . lot_info(m,q))] X(meas, waferType)

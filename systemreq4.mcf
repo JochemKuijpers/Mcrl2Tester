@@ -31,7 +31,9 @@ nu Y(nIn: Nat = n, nOut: Nat = n) . (
     forall newWafers: Nat, newLot: ChuckType .
     [lot_info(newWafers, newLot)] (val(nIn == 0 && nOut == 0)
         && Y(newWafers, newWafers)) &&
+    % if the tray is done, nIn = nOut = 0 should hold as well
+    [tray_done] val(nIn == 0 && nOut == 0) &&
     % in any other action, Y(nIn, nOut) should hold
-    [!(move_r1(Tray, In) || move_r1(Out, Tray)
+    [!(move_r1(Tray, In) || move_r1(Out, Tray) || tray_done
         || exists m:Nat, q:ChuckType . lot_info(m,q))] Y(nIn, nOut)
 )
